@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name" translatable="false">ShareTo</string>
+    <string name="OpShare">Open With</string>
+    <string name="OpView">Share With</string>
+    <string name="OpApk1">Install Apk</string>
+    <string name="tip_notsupport">Unsupported operation</string>
+</resources>

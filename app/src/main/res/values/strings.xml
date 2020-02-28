@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name" translatable="false">ShareTo</string>
+    <string name="OpShare">Open With</string>
+    <string name="OpView">Share With</string>
+    <string name="OpApk1">Install Apk</string>
+    <string name="View">Open %1$s</string>
+    <string name="Share">Share %1$s</string>
+    <string name="tip_invalidURL">Invalid URL</string>
+    <string name="tip_notsupport">Unsupported operation</string>
+    <string name="failed_prase">Unable to parse %1$s</string>
+</resources>
