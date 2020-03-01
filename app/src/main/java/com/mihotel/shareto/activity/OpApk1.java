@@ -1,92 +1,74 @@
 package com.mihotel.shareto.activity;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Toast;
-
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import com.mihotel.shareto.R;
 import com.mihotel.shareto.util.OpUtil;
+import com.mihotel.shareto.util.PermissionUtil;
 
 import java.io.File;
 
+/**
+ * @author mihotel
+ */
 public class OpApk1 extends Activity {
-    private final String[] permissions = new String[]{Manifest.permission.READ_EXTERNAL_STORAGE};
-    private boolean needpreceed = true;
-    private boolean gtsdk28 = false;
+    private Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        init();
-    }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        finish();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        init();
-    }
-
-    private void init() {
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-            gtsdk28 = true;
-            if (checkPermission()) {
-                proceed();
-            } else {
-                requestPermission();
-            }
-        } else {
-            proceed();
+        try {
+            opIntent();
+        } catch (Exception e) {
+            Toast.makeText(this, e + "", Toast.LENGTH_LONG).show();
+            finish();
         }
     }
 
-    private void proceed() {
-        if (needpreceed) {
-            needpreceed = false;
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+
+        if (PermissionUtil.checkReadPermission(this)) {
             try {
-                opIntent();
+                startActivity(intent);
             } catch (Exception e) {
                 Toast.makeText(this, e + "", Toast.LENGTH_LONG).show();
-                finish();
             }
+            finish();
+        } else {
+            PermissionUtil.requestReadPermission(this);
         }
     }
+
 
     private void opIntent() {
 //        OpUtil.praseIntent(getIntent());
 
         Uri uri = getIntent().getData();
 
-        Intent intent;
-        Uri installuri;
         if ("com.tencent.mm.external.fileprovider".equals(uri.getAuthority())) {
             File file = OpUtil.getWechatfile(uri);
             if (file == null) {
                 Toast.makeText(this, String.format(getString(R.string.failed_prase), uri), Toast.LENGTH_LONG).show();
                 finish();
             } else {
+                intent = OpUtil.getInstalIntentBylUri(Uri.fromFile(file));
 
+                Intent contentintent = OpUtil.getInstalIntentBylUri(OpUtil.getContentUri(this, file));
 
-                if (gtsdk28) {
-                    installuri = OpUtil.getContentUri(this, file);
-                } else {
-                    installuri = Uri.fromFile(file);
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P && OpUtil.isneedinstallapkwithcontent(this, contentintent)) {
+                    intent = contentintent;
+                    if (!PermissionUtil.checkReadPermission(this)) {
+                        PermissionUtil.requestReadPermission(this);
+                        return;
+                    }
                 }
-
-                intent = OpUtil.getInstallUri(installuri);
 
 //                OpUtil.praseIntent(intent);
 
@@ -99,12 +81,4 @@ public class OpApk1 extends Activity {
 
     }
 
-    private void requestPermission() {
-        ActivityCompat.requestPermissions(this, permissions, 0x233);
-    }
-
-    private boolean checkPermission() {
-        int permissionRead = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-        return (permissionRead == 0);
-    }
 }

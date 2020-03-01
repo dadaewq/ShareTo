@@ -1,7 +1,7 @@
 <resources>
     <string name="OpShare">转为打开</string>
     <string name="OpView">转为分享</string>
-    <string name="OpApk1">安装应用</string>
+    <string name="OpApk1">安装 apk.1</string>
     <string name="View">打开 %1$s</string>
     <string name="Share">分享 %1$s</string>
     <string name="tip_invalidURL">无效的网址</string>

@@ -2,6 +2,7 @@ package com.mihotel.shareto.util;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -9,9 +10,8 @@ import android.util.Log;
 
 import androidx.core.content.FileProvider;
 
-import com.mihotel.shareto.BuildConfig;
-
 import java.io.File;
+import java.util.List;
 
 /**
  * @author mihotel
@@ -54,6 +54,43 @@ public class OpUtil {
 
     }
 
+    public static boolean isneedinstallapkwithcontent(Context context, Intent intentInstallapkwithcontent) {
+        List<ResolveInfo> list = context.getPackageManager().queryIntentActivities(intentInstallapkwithcontent, 0);
+//        int i = 0;
+//        for (ResolveInfo resolveInfo : list) {
+//            Log.e("resolveInfo " + ++i, resolveInfo.activityInfo.packageName + " | " + resolveInfo.activityInfo.name);
+//        }
+        boolean need = false;
+        for (ResolveInfo resolveInfo : list) {
+//            Log.e("resolveInfo " + ++i, resolveInfo.activityInfo.packageName);
+            if ("com.android.packageinstaller".equals(resolveInfo.activityInfo.packageName) || "com.google.android.packageinstaller".equals(resolveInfo.activityInfo.packageName)) {
+                need = true;
+                break;
+            }
+        }
+        return need;
+
+    }
+
+    public static boolean isneedfile2content(Context context, Intent intentwithfile) {
+        List<ResolveInfo> list = context.getPackageManager().queryIntentActivities(intentwithfile, 0);
+
+        int i = 0;
+        for (ResolveInfo resolveInfo : list) {
+            Log.e("resolveInfo " + ++i, resolveInfo.activityInfo.packageName + " | " + resolveInfo.activityInfo.name);
+        }
+
+        if (list.size() == 0) {
+            return true;
+        } else if (list.size() == 1) {
+            ResolveInfo resolveInfo = list.get(0);
+            return resolveInfo.activityInfo.packageName.equals(context.getPackageName());
+        } else {
+            return false;
+        }
+
+    }
+
     public static Intent shareUrl(Intent originalintent) {
         return new Intent(Intent.ACTION_SEND)
                 .putExtra(Intent.EXTRA_TEXT, originalintent.getDataString())
@@ -76,12 +113,13 @@ public class OpUtil {
 
     public static Intent openUrl(Intent originalintent) {
 
-        String scheme = Uri.parse(originalintent.getExtras().get(Intent.EXTRA_TEXT) + "").getScheme();
+        Uri uri = Uri.parse(originalintent.getStringExtra(Intent.EXTRA_TEXT) + "");
+        String scheme = uri.getScheme();
 
         if ("http".equals(scheme) || "https".equals(scheme)) {
             return new Intent(Intent.ACTION_VIEW)
                     .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .setData(Uri.parse(originalintent.getExtras().get(Intent.EXTRA_TEXT) + ""));
+                    .setData(uri);
         } else {
             return null;
         }
@@ -93,9 +131,10 @@ public class OpUtil {
             type = "*/*";
         }
 
+
         return new Intent(Intent.ACTION_VIEW)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .setDataAndType((Uri) originalintent.getExtras().get(Intent.EXTRA_STREAM), type);
+                .setDataAndType((Uri) originalintent.getParcelableExtra(Intent.EXTRA_STREAM), type);
 
     }
 
@@ -118,13 +157,19 @@ public class OpUtil {
 
     }
 
+    public static void intentFile2Content(Context context, Intent fileintent) {
+
+        fileintent.setDataAndType(getContentUri(context, new File(fileintent.getData().getPath())), fileintent.getType());
+        fileintent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+    }
+
     public static Uri getContentUri(Context context, File file) {
 
         return FileProvider.getUriForFile(context,
-                BuildConfig.APPLICATION_ID + ".fileProvider", file);
+                context.getPackageName() + ".fileProvider", file);
     }
 
-    public static Intent getInstallUri(Uri uri) {
+    public static Intent getInstalIntentBylUri(Uri uri) {
         return new Intent(Intent.ACTION_VIEW)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION)

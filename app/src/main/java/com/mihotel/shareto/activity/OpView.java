@@ -12,6 +12,7 @@ import com.mihotel.shareto.util.OpUtil;
  * @author mihotel
  */
 public class OpView extends Activity {
+    private boolean needfinish = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,15 +37,22 @@ public class OpView extends Activity {
         Intent intent;
         if ("http".equals(scheme) || "https".equals(scheme)) {
             intent = OpUtil.shareUrl(getIntent());
-            Toast.makeText(this, String.format(getString(R.string.Share), intent.getExtras().getString(Intent.EXTRA_TEXT)), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, String.format(getString(R.string.Share), intent.getStringExtra(Intent.EXTRA_TEXT)), Toast.LENGTH_SHORT).show();
         } else {
             intent = OpUtil.view2send(getIntent());
         }
 
 //        OpUtil.praseIntent(intent);
         if ("http".equals(scheme) || "https".equals(scheme)) {
-            Toast.makeText(this, String.format(getString(R.string.Share), intent.getExtras().getString(Intent.EXTRA_TEXT)), Toast.LENGTH_SHORT).show();
+            needfinish = true;
+            Toast.makeText(this, String.format(getString(R.string.Share), intent.getStringExtra(Intent.EXTRA_TEXT)), Toast.LENGTH_SHORT).show();
         }
-        startActivityForResult(Intent.createChooser(intent, null), (int) System.currentTimeMillis());
+        if (needfinish) {
+            startActivity(intent);
+            finish();
+        } else {
+            startActivityForResult(Intent.createChooser(intent, null), (int) System.currentTimeMillis());
+        }
+
     }
 }
