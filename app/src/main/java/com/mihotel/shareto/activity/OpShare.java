@@ -12,11 +12,12 @@ import com.mihotel.shareto.R;
 import com.mihotel.shareto.util.OpUtil;
 import com.mihotel.shareto.util.PermissionUtil;
 
+import java.io.File;
+
 /**
  * @author mihotel
  */
 public class OpShare extends Activity {
-    private boolean needfinish = false;
     private Intent intent;
 
     @Override
@@ -60,16 +61,28 @@ public class OpShare extends Activity {
         finish();
     }
 
+    private void startover() {
+        if (PermissionUtil.checkReadPermission(this)) {
+            startActivity(intent);
+            finish();
+        } else {
+            PermissionUtil.requestReadPermission(this);
+        }
+    }
+
+
     private void opIntent() {
-//        OpUtil.praseIntent(getIntent());
         intent = getIntent();
+//        OpUtil.praseIntent(intent);
+        String scheme = intent.getScheme();
         boolean isUrl = false;
+
         if (intent.hasExtra(Intent.EXTRA_STREAM)) {
-            intent = OpUtil.send2view(intent);
+            intent = OpUtil.intentsend2View(intent);
         } else {
             if (intent.hasExtra(Intent.EXTRA_TEXT)) {
                 isUrl = true;
-                intent = OpUtil.openUrl(intent);
+                intent = OpUtil.intentOpenUrl(intent.getStringExtra(Intent.EXTRA_TEXT) + "");
             } else {
                 intent = null;
             }
@@ -85,32 +98,34 @@ public class OpShare extends Activity {
         } else {
 //            OpUtil.praseIntent(intent);
 
-            String scheme = intent.getScheme();
+
             if ("http".equals(scheme) || "https".equals(scheme)) {
-                needfinish = true;
                 Toast.makeText(this, String.format(getString(R.string.View), intent.getDataString()), Toast.LENGTH_SHORT).show();
-            }
-            if (needfinish) {
                 startActivity(intent);
                 finish();
             } else {
+                if (ContentResolver.SCHEME_CONTENT.equals(intent.getScheme())) {
+                    if (getIntent().hasExtra("realPath")) {
+                        intent = OpUtil.IntentFile2MyContentIntent(this, Intent.ACTION_VIEW, intent.getType(), new File(getIntent().getStringExtra("realPath")));
+                        startover();
+                        return;
+                    }
+                }
                 Uri uri = intent.getData();
-                OpUtil.praseIntent(intent);
+
                 if (uri != null && Build.VERSION.SDK_INT > Build.VERSION_CODES.P && ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
                     Intent contentintent = (Intent) intent.clone();
-                    OpUtil.intentFile2Content(this, contentintent);
+                    OpUtil.viewIntentFile2MyContent(this, contentintent);
                     if (OpUtil.isneedinstallapkwithcontent(this, contentintent) || OpUtil.isneedfile2content(this, intent)) {
                         intent = contentintent;
-                        if (!PermissionUtil.checkReadPermission(this)) {
-                            PermissionUtil.requestReadPermission(this);
-                            return;
-                        }
+                        //                OpUtil.praseIntent(intent);
+                        startover();
+                        return;
                     }
                 }
 //                OpUtil.praseIntent(intent);
                 startActivityForResult(Intent.createChooser(intent, null), (int) System.currentTimeMillis());
             }
         }
-
     }
 }

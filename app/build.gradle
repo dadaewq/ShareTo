@@ -8,8 +8,8 @@ android {
         applicationId "com.mihotel.shareto"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 4
-        versionName "1.3"
+        versionCode 7
+        versionName "1.51"
     }
     buildTypes {
         release {

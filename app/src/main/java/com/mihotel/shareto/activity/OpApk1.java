@@ -52,18 +52,20 @@ public class OpApk1 extends Activity {
 
         Uri uri = getIntent().getData();
 
-        if ("com.tencent.mm.external.fileprovider".equals(uri.getAuthority())) {
-            File file = OpUtil.getWechatfile(uri);
+        if (uri != null && "com.tencent.mm.external.fileprovider".equals(uri.getAuthority())) {
+            File file = OpUtil.getWechatFileFromUri(uri);
             if (file == null) {
                 Toast.makeText(this, String.format(getString(R.string.failed_prase), uri), Toast.LENGTH_LONG).show();
                 finish();
             } else {
-                intent = OpUtil.getInstalIntentBylUri(Uri.fromFile(file));
+                intent = OpUtil.getInstallIntentWithData(Uri.fromFile(file));
 
-                Intent contentintent = OpUtil.getInstalIntentBylUri(OpUtil.getContentUri(this, file));
+                Intent contentintent = OpUtil.getInstallIntentWithData(OpUtil.getMyContentUriForFile(this, file));
+                contentintent.putExtra("realPath", file.getAbsolutePath());
 
                 if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P && OpUtil.isneedinstallapkwithcontent(this, contentintent)) {
                     intent = contentintent;
+                    //                OpUtil.praseIntent(intent);
                     if (!PermissionUtil.checkReadPermission(this)) {
                         PermissionUtil.requestReadPermission(this);
                         return;

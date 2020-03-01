@@ -42,13 +42,13 @@ public class OpUtil {
 
     public static void praseIntent(Intent originalintent) {
 
-        Log.e("Intent  ==>", originalintent + "");
-        Log.e("Intent scheme  ==>", originalintent.getScheme() + "");
+        Log.e("Intent  ===>", originalintent + "");
+        Log.e("Intent scheme  >", originalintent.getScheme() + "");
         Bundle originalExtras = originalintent.getExtras();
         if (originalExtras != null) {
             int i = 0;
             for (String key : originalExtras.keySet()) {
-                Log.e("Bundle" + ++i, key + " | " + originalExtras.get(key));
+                Log.e("Bundle " + ++i, key + " | " + originalExtras.get(key));
             }
         }
 
@@ -75,10 +75,10 @@ public class OpUtil {
     public static boolean isneedfile2content(Context context, Intent intentwithfile) {
         List<ResolveInfo> list = context.getPackageManager().queryIntentActivities(intentwithfile, 0);
 
-        int i = 0;
-        for (ResolveInfo resolveInfo : list) {
-            Log.e("resolveInfo " + ++i, resolveInfo.activityInfo.packageName + " | " + resolveInfo.activityInfo.name);
-        }
+//        int i = 0;
+//        for (ResolveInfo resolveInfo : list) {
+//            Log.e("resolveInfo " + ++i, resolveInfo.activityInfo.packageName + " | " + resolveInfo.activityInfo.name);
+//        }
 
         if (list.size() == 0) {
             return true;
@@ -91,14 +91,40 @@ public class OpUtil {
 
     }
 
-    public static Intent shareUrl(Intent originalintent) {
+    /*
+     * 检测text，如果是网址则生成OpenIntent
+     *
+     */
+    public static Intent intentOpenUrl(String text) {
+
+        Uri uri = Uri.parse(text);
+        String scheme = uri.getScheme();
+
+        if ("http".equals(scheme) || "https".equals(scheme)) {
+            return new Intent(Intent.ACTION_VIEW)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .setData(uri);
+        } else {
+            return null;
+        }
+    }
+
+    /*
+     *以text生成SendIntent
+     *
+     */
+    public static Intent IntentshareUrl(String text) {
         return new Intent(Intent.ACTION_SEND)
-                .putExtra(Intent.EXTRA_TEXT, originalintent.getDataString())
+                .putExtra(Intent.EXTRA_TEXT, text)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .setType("text/plain");
     }
 
-    public static Intent view2send(Intent originalintent) {
+    /*
+     *根据 originalintent 的type和data生成SendIntent
+     *
+     */
+    public static Intent intentview2Send(Intent originalintent) {
         String type = originalintent.getType();
 
         if (type == null) {
@@ -111,26 +137,15 @@ public class OpUtil {
 
     }
 
-    public static Intent openUrl(Intent originalintent) {
-
-        Uri uri = Uri.parse(originalintent.getStringExtra(Intent.EXTRA_TEXT) + "");
-        String scheme = uri.getScheme();
-
-        if ("http".equals(scheme) || "https".equals(scheme)) {
-            return new Intent(Intent.ACTION_VIEW)
-                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .setData(uri);
-        } else {
-            return null;
-        }
-    }
-
-    public static Intent send2view(Intent originalintent) {
+    /*
+     *根据 originalintent 的type和Intent.EXTRA_STREAM生成成ViewIntent
+     *
+     */
+    public static Intent intentsend2View(Intent originalintent) {
         String type = originalintent.getType();
         if (type == null) {
             type = "*/*";
         }
-
 
         return new Intent(Intent.ACTION_VIEW)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -138,7 +153,44 @@ public class OpUtil {
 
     }
 
-    public static File getWechatfile(Uri uri) {
+    public static Intent viewWechatContent2sendMyContent(Context context, Intent originalintent) {
+        Intent intent = null;
+        Uri uri = originalintent.getData();
+        if (uri != null && "com.tencent.mm.external.fileprovider".equals(uri.getAuthority())) {
+            File file = OpUtil.getWechatFileFromUri(uri);
+            if (file != null) {
+                intent = IntentFile2MyContentIntent(context, Intent.ACTION_SEND, originalintent.getType(), file);
+            }
+        }
+        return intent;
+    }
+
+    /*
+     *根据 content、targetIntentAction、type和file生成MyContentIntent
+     *
+     */
+    public static Intent IntentFile2MyContentIntent(Context context, String targetIntentAction, String type, File file) {
+        Intent intent = null;
+        if (Intent.ACTION_VIEW.equals(targetIntentAction)) {
+            Intent tempintent = new Intent()
+                    .setType(type)
+                    .putExtra(Intent.EXTRA_STREAM, getMyContentUriForFile(context, file));
+
+            intent = intentsend2View(tempintent)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    .putExtra("realPath", file.getAbsolutePath());
+        } else if (Intent.ACTION_SEND.equals(targetIntentAction)) {
+            Intent tempintent = new Intent()
+                    .setDataAndType(OpUtil.getMyContentUriForFile(context, file), type);
+            intent = intentview2Send(tempintent)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    .putExtra("realPath", file.getAbsolutePath());
+        }
+        return intent;
+    }
+
+
+    public static File getWechatFileFromUri(Uri uri) {
         String pathSegments0 = uri.getPathSegments().get(0);
 
         String path = Environment.getExternalStoragePublicDirectory("") + "" + uri.getPath().substring(pathSegments0.length() + 1);
@@ -157,19 +209,20 @@ public class OpUtil {
 
     }
 
-    public static void intentFile2Content(Context context, Intent fileintent) {
+    public static void viewIntentFile2MyContent(Context context, Intent fileintent) {
 
-        fileintent.setDataAndType(getContentUri(context, new File(fileintent.getData().getPath())), fileintent.getType());
+        fileintent.setDataAndType(getMyContentUriForFile(context, new File(fileintent.getData().getPath())), fileintent.getType());
         fileintent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        fileintent.putExtra("realPath", fileintent.getData().getPath());
     }
 
-    public static Uri getContentUri(Context context, File file) {
+    public static Uri getMyContentUriForFile(Context context, File file) {
 
         return FileProvider.getUriForFile(context,
                 context.getPackageName() + ".fileProvider", file);
     }
 
-    public static Intent getInstalIntentBylUri(Uri uri) {
+    public static Intent getInstallIntentWithData(Uri uri) {
         return new Intent(Intent.ACTION_VIEW)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
