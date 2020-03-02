@@ -195,55 +195,111 @@ public class OpUtil {
 
     public static File getSomeFileFromReferrerAndUri(String referrer, Uri uri) {
         String authority = uri.getAuthority();
-        File file = null;
+        File file;
+        String path = "";
         if (authority != null) {
-            @SuppressLint("SdCardPath") String storageisolation = "/Android/data/" + referrer + "/sdcard";
+//            showDetail(uri);
+            String uriPath = uri.getPath();
+            String getExternalStoragePublicDirectory = Environment.getExternalStoragePublicDirectory("") + "";
 
-//            Log.e("isAbsolute", uri.isAbsolute() + "");
+            String getExternalRootDir = "/Android/data/" + referrer;
+            String getExternalFilesDir = "/Android/data/" + referrer + "/files";
+            String getExternalCacheDir = "/Android/data/" + referrer + "/cache";
+            @SuppressLint("SdCardPath")
+            String getStorageIsolationDir = "/Android/data/" + referrer + "/sdcard";
+
+
+            String getfirstPathSegment = uri.getPathSegments().get(0);
+            String getExcludeFirstPathSegment = uriPath.substring(getfirstPathSegment.length() + 1);
+            String getLastPathSegment = uri.getLastPathSegment();
+
             switch (referrer) {
                 case "com.tencent.mm":
                     if ("com.tencent.mm.external.fileprovider".equals(authority)) {
-                        String pathSegments0 = uri.getPathSegments().get(0);
 
-                        String path = Environment.getExternalStoragePublicDirectory("") + uri.getPath().substring(pathSegments0.length() + 1);
+                        path = getExternalStoragePublicDirectory + getExcludeFirstPathSegment;
                         file = new File(path);
                         if (file.exists()) {
                             return file;
-                        } else {
-                            path = Environment.getExternalStoragePublicDirectory("") + storageisolation + uri.getPath().substring(pathSegments0.length() + 1);
-                            file = new File(path);
                         }
+
+                        path = getExternalStoragePublicDirectory + getStorageIsolationDir + getExcludeFirstPathSegment;
                     }
                     break;
                 case "com.tencent.mobileqq":
                     if ("com.tencent.mobileqq.fileprovider".equals(authority)) {
-                        String pathSegments0 = uri.getPathSegments().get(0);
 
-                        String path = uri.getPath().substring(pathSegments0.length() + 1);
+                        path = getExcludeFirstPathSegment;
                         file = new File(path);
                         if (file.exists()) {
                             return file;
-                        } else {
-                            int indexTencent = path.indexOf(uri.getPathSegments().get(4)) - 1;
-                            StringBuilder stringBuilder = new StringBuilder(path)
-                                    .insert(indexTencent, storageisolation);
-                            path = stringBuilder.toString();
-                            file = new File(path);
                         }
+
+                        int indexTencent = path.indexOf(uri.getPathSegments().get(4)) - 1;
+                        StringBuilder stringBuilder = new StringBuilder(path)
+                                .insert(indexTencent, getStorageIsolationDir);
+                        path = stringBuilder.toString();
+
                     }
 
                     break;
                 case "com.coolapk.market":
                     if ("com.coolapk.market.fileprovider".equals(authority)) {
-                        String pathSegments0 = uri.getPathSegments().get(0);
 
-                        String path = Environment.getExternalStoragePublicDirectory("") + uri.getPath().substring(pathSegments0.length() + 1);
+                        switch (getfirstPathSegment) {
+                            case "files_root":
+                                path = getExternalStoragePublicDirectory + getExternalRootDir + getExcludeFirstPathSegment;
+                                break;
+                            case "external_files_path":
+                                path = getExternalStoragePublicDirectory + getExternalFilesDir + "/Download" + getExcludeFirstPathSegment;
+                                break;
+                            case "gdt_sdk_download_path":
+                                path = getExternalStoragePublicDirectory + "/GDTDOWNLOAD" + getExcludeFirstPathSegment;
+                                break;
+                            case "external_storage_root":
+                                path = getExternalStoragePublicDirectory + getExcludeFirstPathSegment;
+                                break;
+
+                            default:
+                        }
+
+
                         file = new File(path);
                         if (file.exists()) {
                             return file;
                         } else {
-                            path = Environment.getExternalStoragePublicDirectory("") + storageisolation + uri.getPath().substring(pathSegments0.length() + 1);
+                            path = getExternalStoragePublicDirectory + getStorageIsolationDir + getExcludeFirstPathSegment;
                             file = new File(path);
+                            if (file.exists()) {
+                                return file;
+                            } else {
+                                path = getExternalStoragePublicDirectory + getStorageIsolationDir + "/GDTDOWNLOAD" + getExcludeFirstPathSegment;
+                                Log.e("path", path);
+                            }
+
+                        }
+
+                    }
+                    break;
+                case "com.coolapk.market.vn":
+                    if ("com.coolapk.market.vn.fileProvider".equals(authority)) {
+
+                        switch (getfirstPathSegment) {
+                            case "files_root":
+                                path = getExternalStoragePublicDirectory + getExternalRootDir + getExcludeFirstPathSegment;
+                                break;
+                            case "external_storage_root":
+                                path = getExternalStoragePublicDirectory + getExcludeFirstPathSegment;
+                                break;
+                            default:
+                        }
+
+                        file = new File(path);
+                        if (file.exists()) {
+                            return file;
+                        } else {
+                            path = getExternalStoragePublicDirectory + getStorageIsolationDir + getExcludeFirstPathSegment;
+
                         }
                     }
                     break;
@@ -251,7 +307,9 @@ public class OpUtil {
                     return null;
             }
         }
-        if (file != null && file.exists()) {
+
+        file = new File(path);
+        if (file.exists()) {
             return file;
         } else {
             return null;
@@ -259,12 +317,6 @@ public class OpUtil {
 
     }
 
-//    public static void viewIntentFile2MyContent(Context context, Intent fileintent) {
-//
-//        fileintent.setDataAndType(getMyContentUriForFile(context, new File(fileintent.getData().getPath())), fileintent.getType());
-//        fileintent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-//        fileintent.putExtra("realPath", fileintent.getData().getPath());
-//    }
 
     private static Uri getMyContentUriForFile(Context context, File file) {
 
