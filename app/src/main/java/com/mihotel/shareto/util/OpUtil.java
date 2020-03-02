@@ -1,5 +1,6 @@
 package com.mihotel.shareto.util;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
@@ -18,27 +19,27 @@ import java.util.List;
  */
 public class OpUtil {
 
-//    public static void showDetail(Uri uri) {
-//        Log.e("--Uri--", uri + "");
-//        Log.e("--getPath--", "[" + uri.getPath() + "]");
-//        Log.e("--getLastPathSegment--", "[" + uri.getLastPathSegment() + "]");
-//        Log.e("--getQuery--", "[" + uri.getQuery() + "]");
-//        Log.e("--getScheme--", "[" + uri.getScheme() + "]");
-//        Log.e("--getEncodedPath--", "[" + uri.getEncodedPath() + "]");
-//        Log.e("--getAuthority--", "[" + uri.getAuthority() + "]");
-//        Log.e("--getEncodedAuthority--", "[" + uri.getEncodedAuthority() + "]");
-//        Log.e("--getEncodedFragment--", "[" + uri.getEncodedFragment() + "]");
-//        Log.e("--getUserInfo--", uri.getUserInfo() + "");
-//        Log.e("--getHost--", uri.getHost() + "");
-//        Log.e("--getPathSegments--", uri.getPathSegments() + "");
-//        Log.e("--getSchemeSpecificPart", uri.getSchemeSpecificPart() + "");
-//        Log.e("--getPort--", uri.getPort() + "");
-//        Log.e("-getQueryParameterNames", uri.getQueryParameterNames() + "");
-//        Log.e("--isAbsolute--", uri.isAbsolute() + "");
-//        Log.e("--isHierarchical--", uri.isHierarchical() + "");
-//        Log.e("--isOpaque--", uri.isOpaque() + "");
-//        Log.e("--isRelative--", uri.isRelative() + "");
-//    }
+    public static void showDetail(Uri uri) {
+        Log.e("--Uri--", uri + "");
+        Log.e("--getPath--", "[" + uri.getPath() + "]");
+        Log.e("--getLastPathSegment--", "[" + uri.getLastPathSegment() + "]");
+        Log.e("--getQuery--", "[" + uri.getQuery() + "]");
+        Log.e("--getScheme--", "[" + uri.getScheme() + "]");
+        Log.e("--getEncodedPath--", "[" + uri.getEncodedPath() + "]");
+        Log.e("--getAuthority--", "[" + uri.getAuthority() + "]");
+        Log.e("--getEncodedAuthority--", "[" + uri.getEncodedAuthority() + "]");
+        Log.e("--getEncodedFragment--", "[" + uri.getEncodedFragment() + "]");
+        Log.e("--getUserInfo--", uri.getUserInfo() + "");
+        Log.e("--getHost--", uri.getHost() + "");
+        Log.e("--getPathSegments--", uri.getPathSegments() + "");
+        Log.e("--getSchemeSpecificPart", uri.getSchemeSpecificPart() + "");
+        Log.e("--getPort--", uri.getPort() + "");
+        Log.e("-getQueryParameterNames", uri.getQueryParameterNames() + "");
+        Log.e("--isAbsolute--", uri.isAbsolute() + "");
+        Log.e("--isHierarchical--", uri.isHierarchical() + "");
+        Log.e("--isOpaque--", uri.isOpaque() + "");
+        Log.e("--isRelative--", uri.isRelative() + "");
+    }
 
     public static void praseIntent(Intent originalintent) {
 
@@ -113,7 +114,7 @@ public class OpUtil {
      *以text生成SendIntent
      *
      */
-    public static Intent IntentshareUrl(String text) {
+    public static Intent intentshareUrl(String text) {
         return new Intent(Intent.ACTION_SEND)
                 .putExtra(Intent.EXTRA_TEXT, text)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -153,23 +154,11 @@ public class OpUtil {
 
     }
 
-    public static Intent viewWechatContent2sendMyContent(Context context, Intent originalintent) {
-        Intent intent = null;
-        Uri uri = originalintent.getData();
-        if (uri != null && "com.tencent.mm.external.fileprovider".equals(uri.getAuthority())) {
-            File file = OpUtil.getWechatFileFromUri(uri);
-            if (file != null) {
-                intent = IntentFile2MyContentIntent(context, Intent.ACTION_SEND, originalintent.getType(), file);
-            }
-        }
-        return intent;
-    }
-
     /*
      *根据 content、targetIntentAction、type和file生成MyContentIntent
      *
      */
-    public static Intent IntentFile2MyContentIntent(Context context, String targetIntentAction, String type, File file) {
+    public static Intent intentFile2MyContentIntent(Context context, String targetIntentAction, String type, File file) {
         Intent intent = null;
         if (Intent.ACTION_VIEW.equals(targetIntentAction)) {
             Intent tempintent = new Intent()
@@ -190,43 +179,104 @@ public class OpUtil {
     }
 
 
-    public static File getWechatFileFromUri(Uri uri) {
-        String pathSegments0 = uri.getPathSegments().get(0);
+    public static Intent viewSomeContent2sendMyContent(Context context, String referrer, Intent originalintent) {
+        Intent intent = null;
+        Uri uri = originalintent.getData();
+        if (uri != null) {
+            File file = OpUtil.getSomeFileFromReferrerAndUri(referrer, uri);
+            if (file != null) {
+                intent = intentFile2MyContentIntent(context, Intent.ACTION_SEND, originalintent.getType(), file);
+            }
 
-        String path = Environment.getExternalStoragePublicDirectory("") + "" + uri.getPath().substring(pathSegments0.length() + 1);
-        File file = new File(path);
-        if (file.exists()) {
+        }
+
+        return intent;
+    }
+
+    public static File getSomeFileFromReferrerAndUri(String referrer, Uri uri) {
+        String authority = uri.getAuthority();
+        File file = null;
+        if (authority != null) {
+            @SuppressLint("SdCardPath") String storageisolation = "/Android/data/" + referrer + "/sdcard";
+
+//            Log.e("isAbsolute", uri.isAbsolute() + "");
+            switch (referrer) {
+                case "com.tencent.mm":
+                    if ("com.tencent.mm.external.fileprovider".equals(authority)) {
+                        String pathSegments0 = uri.getPathSegments().get(0);
+
+                        String path = Environment.getExternalStoragePublicDirectory("") + uri.getPath().substring(pathSegments0.length() + 1);
+                        file = new File(path);
+                        if (file.exists()) {
+                            return file;
+                        } else {
+                            path = Environment.getExternalStoragePublicDirectory("") + storageisolation + uri.getPath().substring(pathSegments0.length() + 1);
+                            file = new File(path);
+                        }
+                    }
+                    break;
+                case "com.tencent.mobileqq":
+                    if ("com.tencent.mobileqq.fileprovider".equals(authority)) {
+                        String pathSegments0 = uri.getPathSegments().get(0);
+
+                        String path = uri.getPath().substring(pathSegments0.length() + 1);
+                        file = new File(path);
+                        if (file.exists()) {
+                            return file;
+                        } else {
+                            int indexTencent = path.indexOf(uri.getPathSegments().get(4)) - 1;
+                            StringBuilder stringBuilder = new StringBuilder(path)
+                                    .insert(indexTencent, storageisolation);
+                            path = stringBuilder.toString();
+                            file = new File(path);
+                        }
+                    }
+
+                    break;
+                case "com.coolapk.market":
+                    if ("com.coolapk.market.fileprovider".equals(authority)) {
+                        String pathSegments0 = uri.getPathSegments().get(0);
+
+                        String path = Environment.getExternalStoragePublicDirectory("") + uri.getPath().substring(pathSegments0.length() + 1);
+                        file = new File(path);
+                        if (file.exists()) {
+                            return file;
+                        } else {
+                            path = Environment.getExternalStoragePublicDirectory("") + storageisolation + uri.getPath().substring(pathSegments0.length() + 1);
+                            file = new File(path);
+                        }
+                    }
+                    break;
+                default:
+                    return null;
+            }
+        }
+        if (file != null && file.exists()) {
             return file;
         } else {
-            path = Environment.getExternalStoragePublicDirectory("") + "/Android/data/com.tencent.mm/sdcard" + uri.getPath().substring(pathSegments0.length() + 1);
-            file = new File(path);
-            if (file.exists()) {
-                return file;
-            } else {
-                return null;
-            }
+            return null;
         }
 
     }
 
-    public static void viewIntentFile2MyContent(Context context, Intent fileintent) {
+//    public static void viewIntentFile2MyContent(Context context, Intent fileintent) {
+//
+//        fileintent.setDataAndType(getMyContentUriForFile(context, new File(fileintent.getData().getPath())), fileintent.getType());
+//        fileintent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+//        fileintent.putExtra("realPath", fileintent.getData().getPath());
+//    }
 
-        fileintent.setDataAndType(getMyContentUriForFile(context, new File(fileintent.getData().getPath())), fileintent.getType());
-        fileintent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        fileintent.putExtra("realPath", fileintent.getData().getPath());
-    }
-
-    public static Uri getMyContentUriForFile(Context context, File file) {
+    private static Uri getMyContentUriForFile(Context context, File file) {
 
         return FileProvider.getUriForFile(context,
                 context.getPackageName() + ".fileProvider", file);
     }
 
-    public static Intent getInstallIntentWithData(Uri uri) {
+    public static Intent getInstallIntentForFile(File file) {
         return new Intent(Intent.ACTION_VIEW)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                .setDataAndType(uri, "application/vnd.android.package-archive");
+                .setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
     }
 
 }

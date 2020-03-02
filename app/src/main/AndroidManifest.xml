@@ -66,6 +66,7 @@
 
                 <category android:name="android.intent.category.DEFAULT" />
 
+                <data android:scheme="file" />
                 <data android:scheme="content" />
                 <data android:mimeType="application/apk.1" />
             </intent-filter>

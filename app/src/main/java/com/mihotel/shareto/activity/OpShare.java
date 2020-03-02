@@ -63,6 +63,7 @@ public class OpShare extends Activity {
 
     private void startover() {
         if (PermissionUtil.checkReadPermission(this)) {
+            //                OpUtil.praseIntent(intent);
             startActivity(intent);
             finish();
         } else {
@@ -106,7 +107,7 @@ public class OpShare extends Activity {
             } else {
                 if (ContentResolver.SCHEME_CONTENT.equals(intent.getScheme())) {
                     if (getIntent().hasExtra("realPath")) {
-                        intent = OpUtil.IntentFile2MyContentIntent(this, Intent.ACTION_VIEW, intent.getType(), new File(getIntent().getStringExtra("realPath")));
+                        intent = OpUtil.intentFile2MyContentIntent(this, Intent.ACTION_VIEW, intent.getType(), new File(getIntent().getStringExtra("realPath")));
                         startover();
                         return;
                     }
@@ -114,11 +115,13 @@ public class OpShare extends Activity {
                 Uri uri = intent.getData();
 
                 if (uri != null && Build.VERSION.SDK_INT > Build.VERSION_CODES.P && ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
-                    Intent contentintent = (Intent) intent.clone();
-                    OpUtil.viewIntentFile2MyContent(this, contentintent);
+//                    Intent contentintent = (Intent) intent.clone();
+//                    OpUtil.viewIntentFile2MyContent(this, contentintent);
+
+                    Intent contentintent = OpUtil.intentFile2MyContentIntent(this, Intent.ACTION_VIEW, intent.getType(), new File(intent.getData().getPath()));
+
                     if (OpUtil.isneedinstallapkwithcontent(this, contentintent) || OpUtil.isneedfile2content(this, intent)) {
                         intent = contentintent;
-                        //                OpUtil.praseIntent(intent);
                         startover();
                         return;
                     }

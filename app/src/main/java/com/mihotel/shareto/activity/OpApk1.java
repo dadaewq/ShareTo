@@ -1,6 +1,7 @@
 package com.mihotel.shareto.activity;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -31,50 +32,60 @@ public class OpApk1 extends Activity {
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-
+    private void startover() {
         if (PermissionUtil.checkReadPermission(this)) {
-            try {
-                startActivity(intent);
-            } catch (Exception e) {
-                Toast.makeText(this, e + "", Toast.LENGTH_LONG).show();
-            }
+            //OpUtil.praseIntent(intent);
+            startActivity(intent);
             finish();
         } else {
             PermissionUtil.requestReadPermission(this);
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        try {
+            startover();
+        } catch (Exception e) {
+            Toast.makeText(this, e + "", Toast.LENGTH_LONG).show();
+            finish();
+        }
+    }
+
 
     private void opIntent() {
-//        OpUtil.praseIntent(getIntent());
-
+        intent = getIntent();
+//        OpUtil.praseIntent(intent);
         Uri uri = getIntent().getData();
 
-        if (uri != null && "com.tencent.mm.external.fileprovider".equals(uri.getAuthority())) {
-            File file = OpUtil.getWechatFileFromUri(uri);
-            if (file == null) {
+        if (uri != null) {
+            File file = null;
+            if (ContentResolver.SCHEME_FILE.equals(intent.getScheme())) {
+                String path = uri.getPath();
+                if (path != null) {
+                    file = new File(path);
+                }
+            } else if (intent.hasExtra("realPath")) {
+                file = new File(intent.getStringExtra("realPath") + "");
+            } else {
+                file = OpUtil.getSomeFileFromReferrerAndUri("com.tencent.mm", uri);
+            }
+            if (file == null || !file.exists()) {
                 Toast.makeText(this, String.format(getString(R.string.failed_prase), uri), Toast.LENGTH_LONG).show();
                 finish();
             } else {
-                intent = OpUtil.getInstallIntentWithData(Uri.fromFile(file));
+                intent = OpUtil.getInstallIntentForFile(file);
 
-                Intent contentintent = OpUtil.getInstallIntentWithData(OpUtil.getMyContentUriForFile(this, file));
-                contentintent.putExtra("realPath", file.getAbsolutePath());
+                Intent contentintent = OpUtil.intentFile2MyContentIntent(this, Intent.ACTION_VIEW, intent.getType(), file);
 
                 if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P && OpUtil.isneedinstallapkwithcontent(this, contentintent)) {
                     intent = contentintent;
-                    //                OpUtil.praseIntent(intent);
-                    if (!PermissionUtil.checkReadPermission(this)) {
-                        PermissionUtil.requestReadPermission(this);
-                        return;
-                    }
+                    startover();
+                    return;
                 }
-
 //                OpUtil.praseIntent(intent);
 
-                startActivityForResult(Intent.createChooser(intent, null), (int) System.currentTimeMillis());
+                startActivity(intent);
             }
         } else {
             Toast.makeText(this, R.string.tip_notsupport, Toast.LENGTH_SHORT).show();

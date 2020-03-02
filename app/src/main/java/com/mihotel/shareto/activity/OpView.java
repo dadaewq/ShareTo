@@ -68,6 +68,7 @@ public class OpView extends Activity {
 
     private void startover() {
         if (PermissionUtil.checkReadPermission(this)) {
+            //                OpUtil.praseIntent(intent);
             startActivity(intent);
             finish();
         } else {
@@ -80,33 +81,29 @@ public class OpView extends Activity {
 //        OpUtil.praseIntent(intent);
 
         String scheme = intent.getScheme();
-
         if ("http".equals(scheme) || "https".equals(scheme)) {
-            intent = OpUtil.IntentshareUrl(getIntent().getDataString());
+            intent = OpUtil.intentshareUrl(getIntent().getDataString());
             Toast.makeText(this, String.format(getString(R.string.Share), intent.getStringExtra(Intent.EXTRA_TEXT)), Toast.LENGTH_SHORT).show();
             startActivity(intent);
             finish();
         } else {
             if (ContentResolver.SCHEME_CONTENT.equals(scheme)) {
                 if (intent.hasExtra("realPath")) {
-                    intent = OpUtil.IntentFile2MyContentIntent(this, Intent.ACTION_SEND, intent.getType(), new File(intent.getStringExtra("realPath")));
+                    intent = OpUtil.intentFile2MyContentIntent(this, Intent.ACTION_SEND, intent.getType(), new File(intent.getStringExtra("realPath")));
                     startover();
                     return;
                 }
 
                 String referrer = reflectGetReferrer();
-                if ("com.tencent.mm".equals(referrer)) {
-                    Intent intent1 = OpUtil.viewWechatContent2sendMyContent(this, intent);
-                    if (intent1 != null) {
-                        intent = intent1;
-//                        OpUtil.praseIntent(intent);
-                        startover();
-                        return;
-                    }
+                Intent intent1 = OpUtil.viewSomeContent2sendMyContent(this, referrer, intent);
+                if (intent1 != null) {
+                    intent = intent1;
+                    startover();
+                    return;
                 }
             }
             intent = OpUtil.intentview2Send(getIntent());
-//        OpUtil.praseIntent(intent);
+//            OpUtil.praseIntent(intent);
             startActivityForResult(Intent.createChooser(intent, null), (int) System.currentTimeMillis());
         }
     }
