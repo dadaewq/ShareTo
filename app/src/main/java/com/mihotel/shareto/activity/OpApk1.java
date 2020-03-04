@@ -8,9 +8,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
 import com.mihotel.shareto.R;
 import com.mihotel.shareto.util.OpUtil;
 import com.mihotel.shareto.util.PermissionUtil;
+import com.mihotel.shareto.util.PraseContentUtil;
 
 import java.io.File;
 
@@ -43,7 +46,7 @@ public class OpApk1 extends Activity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         try {
             startover();
         } catch (Exception e) {
@@ -68,12 +71,10 @@ public class OpApk1 extends Activity {
             } else if (intent.hasExtra("realPath")) {
                 file = new File(intent.getStringExtra("realPath") + "");
             } else {
-                file = OpUtil.getSomeFileFromReferrerAndUri("com.tencent.mm", uri);
+                file = PraseContentUtil.getFile(this, uri);
             }
-            if (file == null || !file.exists()) {
-                Toast.makeText(this, String.format(getString(R.string.failed_prase), uri), Toast.LENGTH_LONG).show();
-                finish();
-            } else {
+
+            if (file != null && file.exists()) {
                 intent = OpUtil.getInstallIntentForFile(file);
 
                 Intent contentintent = OpUtil.intentFile2MyContentIntent(this, Intent.ACTION_VIEW, intent.getType(), file);
@@ -84,8 +85,10 @@ public class OpApk1 extends Activity {
                     return;
                 }
 //                OpUtil.praseIntent(intent);
-
                 startActivity(intent);
+            } else {
+                Toast.makeText(this, String.format(getString(R.string.failed_prase), uri), Toast.LENGTH_LONG).show();
+                finish();
             }
         } else {
             Toast.makeText(this, R.string.tip_notsupport, Toast.LENGTH_SHORT).show();

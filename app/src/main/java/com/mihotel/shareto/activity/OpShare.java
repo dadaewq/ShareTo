@@ -6,7 +6,10 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 
 import com.mihotel.shareto.R;
 import com.mihotel.shareto.util.OpUtil;
@@ -33,7 +36,7 @@ public class OpShare extends Activity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
 //        Log.e("requestCode", requestCode + "");
 //        for (String key : permissions) {
@@ -63,7 +66,8 @@ public class OpShare extends Activity {
 
     private void startover() {
         if (PermissionUtil.checkReadPermission(this)) {
-            //                OpUtil.praseIntent(intent);
+//            Log.e("startover", "startover:\n------------------- ");
+//            OpUtil.praseIntent(intent);
             startActivity(intent);
             finish();
         } else {
@@ -74,6 +78,7 @@ public class OpShare extends Activity {
 
     private void opIntent() {
         intent = getIntent();
+//        Log.e("00000000", "00000000:\n------------------- ");
 //        OpUtil.praseIntent(intent);
         String scheme = intent.getScheme();
         boolean isUrl = false;
@@ -105,25 +110,40 @@ public class OpShare extends Activity {
                 startActivity(intent);
                 finish();
             } else {
+                Intent contentIntent;
                 if (ContentResolver.SCHEME_CONTENT.equals(intent.getScheme())) {
-                    if (getIntent().hasExtra("realPath")) {
-                        intent = OpUtil.intentFile2MyContentIntent(this, Intent.ACTION_VIEW, intent.getType(), new File(getIntent().getStringExtra("realPath")));
+
+                    String realPath = null;
+                    contentIntent = getIntent();
+                    if (contentIntent.hasExtra("realPath")) {
+                        realPath = "realPath";
+                    } else if (contentIntent.hasExtra("url")) {
+                        realPath = "url";
+                    }
+                    if (realPath != null) {
+                        Log.e("extraRealPath", contentIntent.getStringExtra(realPath) + "");
+                        contentIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(contentIntent.getStringExtra(realPath) + "")));
+                    }
+
+                    contentIntent = OpUtil.fromActionSomeContent2ActionMyContentIntent(this, Intent.ACTION_SEND, Intent.ACTION_VIEW, contentIntent);
+
+                    if (contentIntent != null) {
+                        intent = contentIntent;
                         startover();
                         return;
                     }
-                }
-                Uri uri = intent.getData();
+                } else {
+                    Uri uri = intent.getData();
 
-                if (uri != null && Build.VERSION.SDK_INT > Build.VERSION_CODES.P && ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
-//                    Intent contentintent = (Intent) intent.clone();
-//                    OpUtil.viewIntentFile2MyContent(this, contentintent);
+                    if (uri != null && Build.VERSION.SDK_INT > Build.VERSION_CODES.P && ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
 
-                    Intent contentintent = OpUtil.intentFile2MyContentIntent(this, Intent.ACTION_VIEW, intent.getType(), new File(intent.getData().getPath()));
+                        Intent contentintent = OpUtil.intentFile2MyContentIntent(this, Intent.ACTION_VIEW, intent.getType(), new File(intent.getData().getPath() + ""));
 
-                    if (OpUtil.isneedinstallapkwithcontent(this, contentintent) || OpUtil.isneedfile2content(this, intent)) {
-                        intent = contentintent;
-                        startover();
-                        return;
+                        if (OpUtil.isneedinstallapkwithcontent(this, contentintent) || OpUtil.isneedfile2content(this, intent)) {
+                            intent = contentintent;
+                            startover();
+                            return;
+                        }
                     }
                 }
 //                OpUtil.praseIntent(intent);

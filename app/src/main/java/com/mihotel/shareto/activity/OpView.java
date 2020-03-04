@@ -3,15 +3,18 @@ package com.mihotel.shareto.activity;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 
 import com.mihotel.shareto.R;
 import com.mihotel.shareto.util.OpUtil;
 import com.mihotel.shareto.util.PermissionUtil;
 
 import java.io.File;
-import java.lang.reflect.Field;
 
 /**
  * @author mihotel
@@ -31,7 +34,7 @@ public class OpView extends Activity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
         if (PermissionUtil.checkReadPermission(this)) {
             try {
@@ -52,23 +55,10 @@ public class OpView extends Activity {
     }
 
 
-    private String reflectGetReferrer() {
-        try {
-            Class activityClass = Class.forName("android.app.Activity");
-
-            //noinspection JavaReflectionMemberAccess
-            Field refererField = activityClass.getDeclaredField("mReferrer");
-            refererField.setAccessible(true);
-            return (String) refererField.get(this);
-        } catch (ClassNotFoundException | IllegalAccessException | NoSuchFieldException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     private void startover() {
         if (PermissionUtil.checkReadPermission(this)) {
-            //                OpUtil.praseIntent(intent);
+//            Log.e("startover", "startover:\n------------------- ");
+//            OpUtil.praseIntent(intent);
             startActivity(intent);
             finish();
         } else {
@@ -78,6 +68,7 @@ public class OpView extends Activity {
 
     private void opIntent() {
         intent = getIntent();
+//        Log.e("00000000", "00000000:\n------------------- ");
 //        OpUtil.praseIntent(intent);
 
         String scheme = intent.getScheme();
@@ -88,16 +79,21 @@ public class OpView extends Activity {
             finish();
         } else {
             if (ContentResolver.SCHEME_CONTENT.equals(scheme)) {
-                if (intent.hasExtra("realPath")) {
-                    intent = OpUtil.intentFile2MyContentIntent(this, Intent.ACTION_SEND, intent.getType(), new File(intent.getStringExtra("realPath")));
-                    startover();
-                    return;
-                }
+                String realPath = null;
 
-                String referrer = reflectGetReferrer();
-                Intent intent1 = OpUtil.viewSomeContent2sendMyContent(this, referrer, intent);
-                if (intent1 != null) {
-                    intent = intent1;
+                if (intent.hasExtra("realPath")) {
+                    realPath = "realPath";
+                } else if (intent.hasExtra("url")) {
+                    realPath = "url";
+                }
+                if (realPath != null) {
+                    Log.e("extraRealPath", intent.getStringExtra(realPath) + "");
+                    intent.setDataAndType(Uri.fromFile(new File(intent.getStringExtra(realPath) + "")), intent.getType());
+                }
+//                Intent contentIntent = OpUtil.viewSomeContent2ActionMyContent(this, Intent.ACTION_SEND, intent);
+                Intent contentIntent = OpUtil.fromActionSomeContent2ActionMyContentIntent(this, Intent.ACTION_VIEW, Intent.ACTION_SEND, intent);
+                if (contentIntent != null) {
+                    intent = contentIntent;
                     startover();
                     return;
                 }
