@@ -7,5 +7,5 @@
     <string name="Share">Share %1$s</string>
     <string name="tip_invalidURL">Invalid URL</string>
     <string name="tip_notsupport">Unsupported operation</string>
-    <string name="failed_prase">Unable to parse %1$s</string>
+    <string name="tip_failed_prase">Unable to parse %1$s</string>
 </resources>

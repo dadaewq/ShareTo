@@ -6,5 +6,5 @@
     <string name="Share">分享 %1$s</string>
     <string name="tip_invalidURL">无效的网址</string>
     <string name="tip_notsupport">不支持的操作</string>
-    <string name="failed_prase">无法解析 %1$s</string>
+    <string name="tip_failed_prase">无法解析 %1$s</string>
 </resources>

@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -16,6 +15,9 @@ import com.mihotel.shareto.util.OpUtil;
 import com.mihotel.shareto.util.PermissionUtil;
 
 import java.io.File;
+
+import static com.mihotel.shareto.util.OpUtil.showToast0;
+import static com.mihotel.shareto.util.OpUtil.showToast1;
 
 /**
  * @author mihotel
@@ -30,7 +32,7 @@ public class OpShare extends Activity {
         try {
             opIntent();
         } catch (Exception e) {
-            Toast.makeText(this, e + "", Toast.LENGTH_LONG).show();
+            showToast1(this, e + "");
             finish();
         }
     }
@@ -50,7 +52,7 @@ public class OpShare extends Activity {
             try {
                 startActivityForResult(Intent.createChooser(intent, null), (int) System.currentTimeMillis());
             } catch (Exception e) {
-                Toast.makeText(this, e + "", Toast.LENGTH_LONG).show();
+                showToast1(this, e + "");
                 finish();
             }
         } else {
@@ -96,9 +98,9 @@ public class OpShare extends Activity {
 
         if (intent == null) {
             if (isUrl) {
-                Toast.makeText(this, R.string.tip_invalidURL, Toast.LENGTH_SHORT).show();
+                showToast0(this, R.string.tip_invalidURL);
             } else {
-                Toast.makeText(this, R.string.tip_notsupport, Toast.LENGTH_SHORT).show();
+                showToast0(this, R.string.tip_notsupport);
             }
             finish();
         } else {
@@ -106,7 +108,7 @@ public class OpShare extends Activity {
 
 
             if ("http".equals(scheme) || "https".equals(scheme)) {
-                Toast.makeText(this, String.format(getString(R.string.View), intent.getDataString()), Toast.LENGTH_SHORT).show();
+                showToast0(this, String.format(getString(R.string.View), intent.getDataString()));
                 startActivity(intent);
                 finish();
             } else {

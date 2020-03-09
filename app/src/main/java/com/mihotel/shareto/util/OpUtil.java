@@ -6,6 +6,7 @@ import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 
@@ -224,6 +225,22 @@ public class OpUtil {
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                 .setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
+    }
+
+    public static void showToast0(Context context, String text) {
+        Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
+    }
+
+    public static void showToast0(Context context, int stringId) {
+        Toast.makeText(context, stringId, Toast.LENGTH_LONG).show();
+    }
+
+    public static void showToast1(Context context, String text) {
+        Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
+    }
+
+    public static void showToast1(Context context, int stringId) {
+        Toast.makeText(context, stringId, Toast.LENGTH_LONG).show();
     }
 
 }

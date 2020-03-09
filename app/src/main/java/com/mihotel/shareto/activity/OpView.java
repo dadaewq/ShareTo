@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -15,6 +14,8 @@ import com.mihotel.shareto.util.OpUtil;
 import com.mihotel.shareto.util.PermissionUtil;
 
 import java.io.File;
+
+import static com.mihotel.shareto.util.OpUtil.showToast1;
 
 /**
  * @author mihotel
@@ -28,7 +29,7 @@ public class OpView extends Activity {
         try {
             opIntent();
         } catch (Exception e) {
-            Toast.makeText(this, e + "", Toast.LENGTH_LONG).show();
+            showToast1(this, e + "");
             finish();
         }
     }
@@ -40,7 +41,7 @@ public class OpView extends Activity {
             try {
                 startActivity(intent);
             } catch (Exception e) {
-                Toast.makeText(this, e + "", Toast.LENGTH_LONG).show();
+                showToast1(this, e + "");
             }
             finish();
         } else {
@@ -74,7 +75,7 @@ public class OpView extends Activity {
         String scheme = intent.getScheme();
         if ("http".equals(scheme) || "https".equals(scheme)) {
             intent = OpUtil.intentshareUrl(getIntent().getDataString());
-            Toast.makeText(this, String.format(getString(R.string.Share), intent.getStringExtra(Intent.EXTRA_TEXT)), Toast.LENGTH_SHORT).show();
+            showToast1(this, String.format(getString(R.string.Share), intent.getStringExtra(Intent.EXTRA_TEXT)));
             startActivity(intent);
             finish();
         } else {

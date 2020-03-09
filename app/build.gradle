@@ -8,8 +8,8 @@ android {
         applicationId "com.mihotel.shareto"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 10
-        versionName "1.7"
+        versionCode 11
+        versionName "1.71"
     }
     buildTypes {
         release {
@@ -29,4 +29,5 @@ dependencies {
 //    implementation fileTree(include: ['*.jar'], dir: 'libs')
     //    implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.core:core:1.2.0'
+
 }

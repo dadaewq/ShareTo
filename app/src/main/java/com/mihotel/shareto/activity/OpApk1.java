@@ -6,16 +6,20 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
 import com.mihotel.shareto.R;
-import com.mihotel.shareto.util.OpUtil;
 import com.mihotel.shareto.util.PermissionUtil;
 import com.mihotel.shareto.util.PraseContentUtil;
 
 import java.io.File;
+
+import static com.mihotel.shareto.util.OpUtil.getInstallIntentForFile;
+import static com.mihotel.shareto.util.OpUtil.intentFile2MyContentIntent;
+import static com.mihotel.shareto.util.OpUtil.isneedinstallapkwithcontent;
+import static com.mihotel.shareto.util.OpUtil.showToast0;
+import static com.mihotel.shareto.util.OpUtil.showToast1;
 
 /**
  * @author mihotel
@@ -30,7 +34,7 @@ public class OpApk1 extends Activity {
         try {
             opIntent();
         } catch (Exception e) {
-            Toast.makeText(this, e + "", Toast.LENGTH_LONG).show();
+            showToast1(this, e + "");
             finish();
         }
     }
@@ -50,7 +54,7 @@ public class OpApk1 extends Activity {
         try {
             startover();
         } catch (Exception e) {
-            Toast.makeText(this, e + "", Toast.LENGTH_LONG).show();
+            showToast1(this, e + "");
             finish();
         }
     }
@@ -75,23 +79,20 @@ public class OpApk1 extends Activity {
             }
 
             if (file != null && file.exists()) {
-                intent = OpUtil.getInstallIntentForFile(file);
+                intent = getInstallIntentForFile(file);
 
-                Intent contentintent = OpUtil.intentFile2MyContentIntent(this, Intent.ACTION_VIEW, intent.getType(), file);
+                Intent contentintent = intentFile2MyContentIntent(this, Intent.ACTION_VIEW, intent.getType(), file);
 
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P && OpUtil.isneedinstallapkwithcontent(this, contentintent)) {
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P && isneedinstallapkwithcontent(this, contentintent)) {
                     intent = contentintent;
-                    startover();
-                    return;
                 }
-//                OpUtil.praseIntent(intent);
-                startActivity(intent);
+                startover();
             } else {
-                Toast.makeText(this, String.format(getString(R.string.failed_prase), uri), Toast.LENGTH_LONG).show();
+                showToast1(this, String.format(getString(R.string.tip_failed_prase), uri));
                 finish();
             }
         } else {
-            Toast.makeText(this, R.string.tip_notsupport, Toast.LENGTH_SHORT).show();
+            showToast0(this, R.string.tip_notsupport);
             finish();
         }
 
