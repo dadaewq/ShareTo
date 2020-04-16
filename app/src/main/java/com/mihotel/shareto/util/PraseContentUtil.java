@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
@@ -22,7 +23,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 /**
- * @author mihotel 2020.03.04
+ * @author mihotel (begin with 2020.03.04)
  */
 public class PraseContentUtil {
     private static Uri uri;
@@ -38,8 +39,11 @@ public class PraseContentUtil {
     private static String getfirstPathSegment;
     private static String getPathFromIndex1PathSegment;
     private static String getLastPathSegment;
+    private final static String AUTHOR_OF_PRASE_CONTENT_UTIL = "mihotel (begin with 2020.03.04)";
 
-    // 反射获取准确的Intent Referrer
+    /**
+     * 反射获取准确的Intent Referrer
+     */
     private static String reflectGetReferrer(Context context) {
         try {
 
@@ -55,7 +59,9 @@ public class PraseContentUtil {
         }
     }
 
-    //获取SharedUserId,兼容"存储空间隔离"新特性
+    /**
+     * 获取pkgName的SharedUserId,兼容"存储空间隔离"新特性
+     */
     private static String getSharedUserId(Context context, String pkgName) {
         PackageManager pm = context.getPackageManager();
         ApplicationInfo applicationInfo = null;
@@ -107,7 +113,7 @@ public class PraseContentUtil {
         // DocumentProvider
         if (DocumentsContract.isDocumentUri(context, uri)) {
 
-            final String docId = DocumentsContract.getDocumentId(uri);
+            String docId = DocumentsContract.getDocumentId(uri);
             final String[] split = docId.split(":");
             final String type = split[0];
 
@@ -116,16 +122,24 @@ public class PraseContentUtil {
             switch (getAuthority) {
                 // DownloadsProvider
                 case "com.android.providers.downloads.documents":
+
                     if (split.length > 1) {
                         if ("raw".equalsIgnoreCase(type)) {
                             path = split[1];
                         }
                     } else {
-                        //测试多个设备都无法使用,Android9以上必不能用
-                        Uri contentUri = ContentUris.withAppendedId(
-                                Uri.parse("content://downloads/public_downloads"), Long.parseLong(docId));
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                            //不支持Android10 及以上
+                            // 需要android.permission.ACCESS_ALL_DOWNLOADS
+                            String[] uriString = new String[]{"content://downloads/public_downloads", "content://downloads/my_downloads", "content://downloads/all_downloads"};
 
-                        path = getDataColumn(context, contentUri, null, null);
+                            for (String s : uriString) {
+                                path = getDataColumn(context, ContentUris.withAppendedId(Uri.parse(s), Long.parseLong(docId)), null, null);
+                                if (path != null) {
+                                    break;
+                                }
+                            }
+                        }
                     }
                     break;
                 // ExternalStorageProvider
@@ -169,11 +183,8 @@ public class PraseContentUtil {
             }
         }
 
-        if (path != null) {
-            File file = new File(path);
-            if (file.exists()) {
-                return file;
-            }
+        if (checkFileorPath(path)) {
+            return new File(path);
         }
 
         return null;
@@ -251,7 +262,12 @@ public class PraseContentUtil {
             return null;
         } else {
             Log.e("getSomeFile_FROM_URI", uri + "");
-            File file = getSomeFileFromAuthorityAndUri();
+            File file = null;
+            try {
+                file = getSomeFileFromAuthorityAndUri();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             if (file == null) {
                 file = getSomeFileFromReferrerAndUri();
             }
@@ -390,7 +406,7 @@ public class PraseContentUtil {
             case "pl.solidexplorer2.files":
             case "cn.ljt.p7zip.fileprovider":
             default:
-                if (("downloads").equals(getfirstPathSegment)) {
+                if ("downloads".equals(getfirstPathSegment)) {
                     if (uri.getPathSegments().size() > 1) {
                         path = getExternalStorageDirectory + "/Download" + getPathFromIndex1PathSegment;
                         path0 = path;

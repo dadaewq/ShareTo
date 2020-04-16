@@ -1,6 +1,0 @@
-<resources>
-    <string name="OpShare">转为打开</string>
-    <string name="OpView">转为分享</string>
-    <string name="OpApk1">安装应用</string>
-    <string name="tip_notsupport">不支持的操作</string>
-</resources>

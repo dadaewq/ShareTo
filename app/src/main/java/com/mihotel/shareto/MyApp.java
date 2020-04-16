@@ -3,6 +3,7 @@ package com.mihotel.shareto;
 import android.app.Application;
 import android.os.StrictMode;
 
+@SuppressWarnings("WeakerAccess")
 public class MyApp extends Application {
 
     @Override
